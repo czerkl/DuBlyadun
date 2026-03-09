@@ -8,14 +8,14 @@ class Config:
     GROQ_API_KEY = os.getenv("GROQ_API_KEY")
     SUPABASE_URL = os.getenv("SUPABASE_URL")
     SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+    # Добавляем ID админа (превращаем в int для сравнения)
+    ADMIN_ID = int(os.getenv("ADMIN_ID", 0)) 
     PORT = int(os.getenv("PORT", 8080))
     
-    # Безопасное получение ID лога
     _log_id = os.getenv("LOG_CHAT_ID")
     LOG_CHAT_ID = int(_log_id) if _log_id else None
 
 config = Config()
 
-# ПРОВЕРКА: Если хотя бы один ключ пустой — бот выдаст ошибку сразу
-if not all([config.TG_TOKEN, config.GROQ_API_KEY, config.SUPABASE_URL, config.SUPABASE_KEY]):
-    raise ValueError("Критическая ошибка: Не все переменные окружения (TG_TOKEN, GROQ_API_KEY, SUPABASE_URL, SUPABASE_KEY) заполнены!")
+if not all([config.TG_TOKEN, config.GROQ_API_KEY, config.SUPABASE_URL, config.SUPABASE_KEY, config.ADMIN_ID]):
+    raise ValueError("Критическая ошибка: В переменных окружения не хватает данных (проверь ключи Supabase и ADMIN_ID)!")
