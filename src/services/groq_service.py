@@ -5,27 +5,30 @@ from src.config import config
 class GroqManager:
     def __init__(self):
         self.client = AsyncGroq(api_key=config.GROQ_API_KEY)
+        # По умолчанию ставим mixtral, она часто стабильнее к лимитам
+        self.current_model = "mixtral-8x7b-32768"
+        
+        # НОВЫЙ ПРОМТ: Ломаем бота, делаем человека
         self.system_prompt = (
-            "Ты — Павел Дуров. Ты аскет, гений, создатель Telegram. "
-            "Твой язык остр, мысли глубоки, ответы коротки. "
-            "Никакой вежливости ради вежливости. Только суть."
+            "ты павел дуров. пиши только с маленькой буквы. "
+            "никаких запятых если можно обойтись без них. "
+            "отвечай максимально коротко и по делу. никакой вежливости. "
+            "ты гений, аскет, создатель телеграм. ты не ии, ты реальный паша. "
+            "твой стиль — холодный минимализм. забудь про фразы 'я могу помочь' или 'как бот'. "
+            "если тебя бесят — отвечай дерзко."
         )
 
     async def get_durov_response(self, history: list):
         try:
             completion = await self.client.chat.completions.create(
-                model="llama-3.1-8b-instant",
+                model=self.current_model,
                 messages=[{"role": "system", "content": self.system_prompt}] + history,
-                temperature=0.8
+                temperature=0.9 # Чуть больше хаоса для живости
             )
-            return completion.choices[0].message.content
+            # Принудительно в нижний регистр на выходе
+            return completion.choices[0].message.content.lower()
         except Exception as e:
-            err_str = str(e).lower()
-            # ПУНКТ №5: Если Groq перегружен (Rate Limit)
-            if "rate_limit" in err_str or "429" in err_str:
-                return "Слишком много запросов. Даже мои серверы требуют тишины. Подожди минуту."
-            
-            # Если любая другая ошибка
-            return "Цифровой шум мешает связи. Повтори запрос позже, когда архитектура стабилизируется."
+            # Мы не гасим ошибку здесь, а пробрасываем её в обработчик
+            raise e
 
 ai_manager = GroqManager()
