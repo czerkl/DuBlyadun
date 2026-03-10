@@ -8,8 +8,7 @@ class Config:
     GROQ_API_KEY = os.getenv("GROQ_API_KEY")
     SUPABASE_URL = os.getenv("SUPABASE_URL")
     SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-    # Добавляем ID админа (превращаем в int для сравнения)
-    ADMIN_ID = int(os.getenv("ADMIN_ID", 0)) 
+    ADMIN_ID = int(os.getenv("ADMIN_ID", 0))
     PORT = int(os.getenv("PORT", 8080))
     
     _log_id = os.getenv("LOG_CHAT_ID")
@@ -17,5 +16,17 @@ class Config:
 
 config = Config()
 
-if not all([config.TG_TOKEN, config.GROQ_API_KEY, config.SUPABASE_URL, config.SUPABASE_KEY, config.ADMIN_ID]):
-    raise ValueError("Критическая ошибка: В переменных окружения не хватает данных (проверь ключи Supabase и ADMIN_ID)!")
+# Жёсткая проверка: теперь корректно обрабатывает ADMIN_ID=0
+required_vars = {
+    "TG_TOKEN": config.TG_TOKEN,
+    "GROQ_API_KEY": config.GROQ_API_KEY,
+    "SUPABASE_URL": config.SUPABASE_URL,
+    "SUPABASE_KEY": config.SUPABASE_KEY
+}
+
+for name, val in required_vars.items():
+    if not val:
+        raise ValueError(f"Критическая ошибка: Переменная {name} отсутствует в .env!")
+
+if config.ADMIN_ID == 0:
+    print("⚠️ Внимание: ADMIN_ID не установлен, доступ к панели управления ограничен.")
