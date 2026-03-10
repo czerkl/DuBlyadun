@@ -1,6 +1,9 @@
+# -*- coding: utf-8 -*-
 import asyncio
 import logging
 from aiogram import Bot, Dispatcher
+# Если main.py лежит ВНУТРИ папки src, используй: from config import config
+# Если main.py лежит В КОРНЕ (рядом с папкой src), используй: from src.config import config
 from src.config import config
 from src.handlers.messages import router
 from src.server import start_web_server
@@ -16,7 +19,8 @@ async def main():
     dp = Dispatcher()
     dp.include_router(router)
 
-    await send_log(bot, "🚀 <b>Система Дурова v2.0 в сети.</b>")
+    # Удалил сложные символы, оставил чистый UTF-8
+    await send_log(bot, "🚀 <b>Система Дурова v2.0 запущена.</b>")
 
     try:
         logging.info("--- Бот запущен ---")
@@ -25,7 +29,7 @@ async def main():
             start_web_server()
         )
     except Exception as e:
-        logging.error(f"Критическая ошибка: {e}")
+        logging.error(f"Ошибка: {e}")
     finally:
         await bot.session.close()
 
@@ -33,4 +37,4 @@ if __name__ == "__main__":
     try:
         asyncio.run(main())
     except (KeyboardInterrupt, SystemExit):
-        logging.info("Остановлено.")
+        logging.info("Бот остановлен.")
