@@ -8,19 +8,21 @@ from src.services.logger_service import send_log
 
 router = Router()
 
-# Команда смены модели (Только для Админа)
-@router.message(Command("change"))
-async def cmd_change_model(message: types.Message):
-    if message.from_user.id != config.ADMIN_ID:
+@router.message(Command("prompt"))
+async def cmd_set_prompt(message: types.Message):
+    if message.from_user.id != config.ADMIN_ID: return
+    new_p = message.text.replace("/prompt", "").strip()
+    if not new_p:
+        await message.reply(f"Текущий промпт:\n<code>{ai_manager.system_prompt}</code>", parse_mode="HTML")
         return
-    parts = message.text.split()
-    if len(parts) < 2:
-        await message.reply(f"текущая модель: {ai_manager.current_model}")
-        return
-    ai_manager.current_model = parts[1]
-    await message.reply(f"модель изменена на {parts[1]}")
+    ai_manager.system_prompt = new_p
+    await message.reply("✅ Личность Дурова обновлена.")
 
-# Основной обработчик сообщений
+@router.message(Command("clear"))
+async def cmd_clear_history(message: types.Message):
+    await asyncio.to_thread(db.clear_history, message.chat.id)
+    await message.reply("🧹 Память стерта. Кто ты?")
+
 @router.message(F.text)
 async def handle_all_messages(message: types.Message):
     if message.from_user.is_bot: return
@@ -34,38 +36,23 @@ async def handle_all_messages(message: types.Message):
     if is_hit or is_reply or is_private:
         chat_id = message.chat.id
         try:
+            # 1. Сразу сохраняем входящее сообщение
+            await asyncio.to_thread(db.save_message, chat_id, "user", message.text)
             await message.bot.send_chat_action(chat_id, action="typing")
 
-            # 1. Достаем историю
+            # 2. Получаем историю (включая только что сохраненное сообщение)
             history = await asyncio.to_thread(db.get_history, chat_id)
-            history.append({"role": "user", "content": message.text})
 
-            # 2. Генерируем ответ
+            # 3. Генерация ответа через Groq
             response_text = await ai_manager.get_durov_response(history)
-            
-            # 3. Сначала отвечаем пользователю
             await message.reply(response_text)
 
-            # 4. Сохраняем в базу данных
-            await asyncio.to_thread(db.save_message, chat_id, "user", message.text)
+            # 4. Сохраняем ответ бота
             await asyncio.to_thread(db.save_message, chat_id, "assistant", response_text)
 
-            # 5. !!! ВОЗВРАЩАЕМ ЛОГИ ИЗ 1.2 !!!
-            # Это прилетит в твой канал при каждом успешном ответе
-            success_log = (
-                f"User: {message.from_user.full_name}\n"
-                f"Txt: {message.text}\n"
-                f"Ans: {response_text}"
-            )
-            await send_log(message.bot, success_log)
+            # 5. Логирование
+            await send_log(message.bot, f"User: {message.from_user.full_name}\nTxt: {message.text}\nAns: {response_text}")
 
         except Exception as e:
-            # СУПЕР-ОТЛАДКА (ошибки 429, БД и прочее)
-            error_log = f"КРИТИЧЕСКАЯ ОШИБКА\nЧат: {chat_id}\nТип: {type(e).__name__}\nИнфо: {str(e)}"
-            await send_log(message.bot, error_log)
-            
-            # Вежливый (или не очень) ответ пользователю при сбое
-            if "rate_limit" in str(e).lower() or "429" in str(e):
-                await message.reply("лимиты исчерпаны. даже мои серверы требуют паузы.")
-            else:
-                await message.reply("что-то пошло не так. глянь логи.")
+            await send_log(message.bot, f"⚠️ ОШИБКА: {type(e).__name__}\n{str(e)}")
+            await message.reply("Система перегружена. Паша ушел в горы.")
