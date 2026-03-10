@@ -6,44 +6,31 @@ from src.handlers.messages import router
 from src.server import start_web_server
 from src.services.logger_service import send_log
 
-# 袧邪褋褌褉芯泄泻邪 谢芯谐懈褉芯胁邪薪懈褟 (褔褌芯斜褘 胁懈写械褌褜, 褔褌芯 锌褉芯懈褋褏芯写懈褌 胁 泻芯薪褋芯谢懈 Render)
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
 async def main():
-    # 1. 袠薪懈褑懈邪谢懈蟹邪褑懈褟 斜芯褌邪 懈 写懈褋锌械褌褔械褉邪
     bot = Bot(token=config.TG_TOKEN)
     dp = Dispatcher()
-
-    # 2. 袩芯写泻谢褞褔邪械屑 屑邪褉褕褉褍褌褘 (泻芯屑邪薪写褘 /start, 褌褉懈谐谐械褉褘 "袛褍褉芯胁" 懈 褌.写.)
     dp.include_router(router)
 
-    # 3. 小芯芯斜褖械薪懈械 胁 褌胁芯泄 谢芯谐-泻邪薪邪谢 芯 褌芯屑, 褔褌芯 斜芯褌 褍褋锌械褕薪芯 芯卸懈谢
-    await send_log(bot, "馃殌 <b>小懈褋褌械屑邪 '袛褍褉芯胁 袘谢褟写褍薪' v1.2 蟹邪锌褍褖械薪邪.</b>\n小褌邪褌褍褋: 袦芯薪懈褌芯褉懈薪谐 邪泻褌懈胁械薪.")
+    await send_log(bot, "🚀 <b>Система Дурова v2.0 в сети.</b>")
 
     try:
-        logging.info("--- 袘芯褌 蟹邪锌褍褖械薪 懈 褋谢褍褕邪械褌 褋芯芯斜褖械薪懈褟 ---")
-        
-        # 4. 袟邪锌褍褋泻邪械屑 胁褋褢 锌邪褉邪谢谢械谢褜薪芯:
-        # - dp.start_polling: 褋谢褍褕邪械褌 Telegram
-        # - start_web_server: 芯褌胁械褔邪械褌 锌懈薪谐械褉褍 Google, 褔褌芯斜褘 Render 薪械 褋锌邪谢
+        logging.info("--- Бот запущен ---")
         await asyncio.gather(
             dp.start_polling(bot),
             start_web_server()
         )
     except Exception as e:
-        # 袝褋谢懈 褔褌芯-褌芯 褍锌邪写械褌, 褌褘 褍胁懈写懈褕褜 芯褕懈斜泻褍 胁 谢芯谐邪褏 Render
-        logging.error(f"袣褉懈褌懈褔械褋泻邪褟 芯褕懈斜泻邪 锌褉懈 褉邪斜芯褌械 斜芯褌邪: {e}")
-        await send_log(bot, f"鈿狅笍 <b>袣褉懈褌懈褔械褋泻邪褟 芯褕懈斜泻邪:</b>\n<code>{e}</code>")
+        logging.error(f"Критическая ошибка: {e}")
     finally:
-        # 袙邪卸薪芯: 蟹邪泻褉褘胁邪械屑 褋械褋褋懈褞 斜芯褌邪, 褔褌芯斜褘 薪械 斜褘谢芯 褍褌械褔械泻 锌邪屑褟褌懈
         await bot.session.close()
-        logging.info("--- 小械褋褋懈褟 斜芯褌邪 蟹邪泻褉褘褌邪 ---")
 
 if __name__ == "__main__":
     try:
         asyncio.run(main())
     except (KeyboardInterrupt, SystemExit):
-        logging.info("袘芯褌 芯褋褌邪薪芯胁谢械薪 锌芯谢褜蟹芯胁邪褌械谢械屑.")
+        logging.info("Остановлено.")
