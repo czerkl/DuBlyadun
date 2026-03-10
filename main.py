@@ -17,8 +17,8 @@ async def main():
     dp = Dispatcher()
     dp.include_router(router)
 
-    # Упростил текст, чтобы убрать возможные ошибки кодировки
-    await send_log(bot, "System Online: Durov v2.0 is active.")
+    # Чистая строка без спецсимволов для лога запуска
+    await send_log(bot, "Durov Bot 2.0 is now Online.")
 
     try:
         logging.info("--- Бот запущен ---")
@@ -28,7 +28,6 @@ async def main():
         )
     except Exception as e:
         logging.error(f"Error: {e}")
-        await send_log(bot, f"Error: {e}")
     finally:
         await bot.session.close()
 
